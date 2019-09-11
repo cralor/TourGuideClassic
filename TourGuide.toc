@@ -1,15 +1,13 @@
-## Interface: 40100
+## Interface: 11300
 
-## Title: Tour Guide
+## Title: Tour Guide (Classic)
 ## Notes: Powerleveling guide framework
 ## Notes-koKR: 파워레벨링 가이드 프레임워크
-## Author: Tekkub Stoutwrithe
-## Version: Alpha
-## X-Website: http://www.tekkub.net/
-## X-Email: tekkub-wow@googlegroups.com
+## Author: cralor, Tekkub Stoutwrithe
+## Version: classic
 ## X-Category: Quest
 
-## SavedVariables: TourGuideAlphaDB
+## SavedVariables: TourGuideClassicDB
 
 ## OptionalDeps: Dongle, Optionhouse, TomTom, tekDebug
 
@@ -17,10 +15,11 @@
 ## X-LoadOn-Always: delayed
 ## X-LoadOn-LDB-Launcher: Interface\Icons\Ability_Hunter_Pathfinding TourGuideLauncher
 
-Dongle.lua
-tekKonfig\tekKonfig.xml
-CallbackHandler-1.0.lua
-LibDataBroker-1.1\LibDataBroker-1.1.lua
+libs\Dongle.lua
+libs\tekKonfig\tekKonfig.xml
+libs\CallbackHandler-1.0.lua
+libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+libs\OptionHouse.lua
 WidgetWarlock.lua
 
 Locale.lua
