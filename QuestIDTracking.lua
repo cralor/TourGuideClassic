@@ -9,24 +9,25 @@ local hadquest
 
 local turnedinquests, currentquests, oldquests, titles, firstscan, abandoning = {}, {}, {}, {}, true
 TourGuide.turnedinquests = turnedinquests
--- local qids = setmetatable({}, {
--- 	__index = function(t,i)
--- 		local v = tonumber(i:match("|Hquest:(%d+):"))
--- 		t[i] = v
--- 		return v
--- 	end,
--- })
--- TourGuide.QIDmemo = qids
+--[[ local qids = setmetatable({}, {
+	__index = function(t,i)
+		local v = tonumber(i:match("|Hquest:(%d+):"))
+		t[i] = v
+		return v
+	end,
+})
+TourGuide.QIDmemo = qids ]]
 
 
 function TourGuide:QuestID_QUEST_LOG_UPDATE()
+	local numEntries, numQuests = GetNumQuestLogEntries();
+
 	currentquests, oldquests = oldquests, currentquests
 	for i in pairs(currentquests) do currentquests[i] = nil end
 
-	for i=1,GetNumQuestLogEntries() do
-		local title = GetQuestLogTitle(i)
-		local qid = select(8, title) or 0
-
+	for i=1, numEntries do
+		local title, _, _, _, _, _, _, qid = GetQuestLogTitle(i)
+		qid = qid or 0
 		if qid > 0 then
 			currentquests[qid] = true
 			titles[qid] = title
