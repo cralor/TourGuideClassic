@@ -9,20 +9,14 @@ local hadquest
 
 local turnedinquests, currentquests, oldquests, titles, firstscan, abandoning = {}, {}, {}, {}, true
 TourGuide.turnedinquests = turnedinquests
-local qids = setmetatable({}, {
-	__index = function(t,i)
-		local v = tonumber(i:match("|Hquest:(%d+):"))
-		t[i] = v
-		return v
-	end,
-})
-TourGuide.QIDmemo = qids
-
-
-function TourGuide:QUEST_QUERY_COMPLETE()
-	GetQuestsCompleted(TourGuide.turnedinquests)
-	self:UpdateStatusFrame()
-end
+-- local qids = setmetatable({}, {
+-- 	__index = function(t,i)
+-- 		local v = tonumber(i:match("|Hquest:(%d+):"))
+-- 		t[i] = v
+-- 		return v
+-- 	end,
+-- })
+-- TourGuide.QIDmemo = qids
 
 
 function TourGuide:QuestID_QUEST_LOG_UPDATE()
@@ -30,11 +24,12 @@ function TourGuide:QuestID_QUEST_LOG_UPDATE()
 	for i in pairs(currentquests) do currentquests[i] = nil end
 
 	for i=1,GetNumQuestLogEntries() do
-		local link = GetQuestLink(i)
-		local qid = link and qids[link]
-		if qid then
+		local title = GetQuestLogTitle(i)
+		local qid = select(8, title) or 0
+
+		if qid > 0 then
 			currentquests[qid] = true
-			titles[qid] = GetQuestLogTitle(i)
+			titles[qid] = title
 		end
 	end
 
@@ -64,4 +59,3 @@ function AbandonQuest(...)
 	abandoning = true
 	return orig(...)
 end
-
