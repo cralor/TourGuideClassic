@@ -154,12 +154,8 @@ end
   Begin Library Implementation
 ---------------------------------------------------------------------------]]
 
-local major = "Dongle-1.0"
-local minor = tonumber(string.match("$Revision: 674 $", "(%d+)") or 1) + 500
--- ** IMPORTANT NOTE **
--- Due to some issues we had previously with Dongle revision numbers
--- we need to artificially inflate the minor revision number, to ensure
--- we load sequentially.
+local major = "Dongle-1.2"
+local minor = tonumber(string.match("$Revision: 674 $", "(%d+)") or 1)
 
 assert(DongleStub, string.format("%s requires DongleStub.", major))
 
@@ -169,6 +165,7 @@ local Dongle = {}
 local methods = {
 	"RegisterEvent", "UnregisterEvent", "UnregisterAllEvents", "IsEventRegistered",
 	"RegisterMessage", "UnregisterMessage", "UnregisterAllMessages", "TriggerMessage", "IsMessageRegistered",
+	"ScheduleTimer", "ScheduleRepeatingTimer", "CancelTimer", "IsTimerScheduled",
 	"EnableDebug", "IsDebugEnabled", "Print", "PrintF", "Debug", "DebugF", "Echo", "EchoF",
 	"InitializeDB",
 	"InitializeSlashCommand",
@@ -183,6 +180,8 @@ local events = {}
 local databases = {}
 local commands = {}
 local messages = {}
+local timers = {}
+local heap = {}
 
 local frame
 
@@ -399,8 +398,11 @@ function Dongle:IsEventRegistered(event)
 	assert(3, reg, string.format(L["MUST_CALLFROM_REGISTERED"], "IsEventRegistered"))
 	argcheck(event, 2, "string")
 
-	local tbl = events[event]
-	return tbl
+	if events[event] and events[event][self] then
+		return true
+	else
+		return false
+	end
 end
 
 --[[-------------------------------------------------------------------------
@@ -468,6 +470,145 @@ function Dongle:IsMessageRegistered(msg)
 
 	local tbl = messages[msg]
 	return tbl[self]
+end
+
+--[[-------------------------------------------------------------------------
+	Timer System
+---------------------------------------------------------------------------]]
+
+local function HeapSwap(i1, i2)
+	heap[i1], heap[i2] = heap[i2], heap[i1]
+end
+
+local function HeapBubbleUp(index)
+	while index > 1 do
+		local parentIndex = math.floor(index / 2)
+		if heap[index].timeToFire < heap[parentIndex].timeToFire then
+			HeapSwap(index, parentIndex)
+			index = parentIndex
+		else
+			break
+		end
+	end
+end
+
+local function HeapBubbleDown(index)
+	while 2 * index <= heap.lastIndex do
+		local leftIndex = 2 * index
+		local rightIndex = leftIndex + 1
+		local current = heap[index]
+		local leftChild = heap[leftIndex]
+		local rightChild = heap[rightIndex]
+
+		if not rightChild then
+			if leftChild.timeToFire < current.timeToFire then
+				HeapSwap(index, leftIndex)
+				index = leftIndex
+			else
+				break
+			end
+		else
+			if leftChild.timeToFire < current.timeToFire or
+			   rightChild.timeToFire < current.timeToFire then
+				if leftChild.timeToFire < rightChild.timeToFire then
+					HeapSwap(index, leftIndex)
+					index = leftIndex
+				else
+					HeapSwap(index, rightIndex)
+					index = rightIndex
+				end
+			else
+				break
+			end
+		end
+	end
+end
+
+local function OnUpdate(frame, elapsed)
+	local schedule = heap[1]
+	while schedule and schedule.timeToFire < GetTime() do
+		if schedule.cancelled then
+			HeapSwap(1, heap.lastIndex)
+			heap[heap.lastIndex] = nil
+			heap.lastIndex = heap.lastIndex - 1
+			HeapBubbleDown(1)
+		else
+			if schedule.args then
+				safecall(schedule.func, schedule.name, unpack(schedule.args))
+			else
+				safecall(schedule.func, schedule.name)
+			end
+			
+			if schedule.repeating then
+				schedule.timeToFire = schedule.timeToFire + schedule.repeating
+				HeapBubbleDown(1)
+			else
+				HeapSwap(1, heap.lastIndex)
+				heap[heap.lastIndex] = nil
+				heap.lastIndex = heap.lastIndex - 1
+				HeapBubbleDown(1)
+				timers[schedule.name] = nil
+			end
+		end
+		schedule = heap[1]
+	end
+	if not schedule then frame:Hide() end
+end
+
+function Dongle:ScheduleTimer(name, func, delay, ...)
+	argcheck(self, 1, "table")
+	argcheck(name, 2, "string")
+	argcheck(func, 3, "function")
+	argcheck(delay, 4, "number")
+
+	if Dongle:IsTimerScheduled(name) then
+		Dongle:CancelTimer(name)
+	end
+
+	local schedule = {}
+	timers[name] = schedule
+	schedule.timeToFire = GetTime() + delay
+	schedule.func = func
+	schedule.name = name
+	if select('#', ...) ~= 0 then
+		schedule.args = { ... }
+	end
+
+	if heap.lastIndex then
+		heap.lastIndex = heap.lastIndex + 1
+	else
+		heap.lastIndex = 1
+	end
+	heap[heap.lastIndex] = schedule
+	HeapBubbleUp(heap.lastIndex)
+	if not frame:IsShown() then
+		frame:Show()
+	end
+end
+
+function Dongle:ScheduleRepeatingTimer(name, func, delay, ...)
+	Dongle:ScheduleTimer(name, func, delay, ...)
+	timers[name].repeating = delay
+end
+
+function Dongle:IsTimerScheduled(name)
+	argcheck(self, 1, "table")
+	argcheck(name, 2, "string")
+	local schedule = timers[name]
+	if schedule then
+		return true, schedule.timeToFire - GetTime()
+	else
+		return false
+	end
+end
+
+function Dongle:CancelTimer(name)
+	argcheck(self, 1, "table")
+	argcheck(name, 2, "string")
+	local schedule = timers[name]
+	if not schedule then return end
+	schedule.cancelled = true
+	timers[name] = nil
 end
 
 --[[-------------------------------------------------------------------------
@@ -1233,6 +1374,8 @@ local function Activate(self, old)
 		commands = old.commands or commands
 		messages = old.messages or messages
 		frame = old.frame or CreateFrame("Frame")
+		timers = old.timers or timers
+		heap = old.heap or heap
 	else
 		frame = CreateFrame("Frame")
 		local reg = {obj = self, name = "Dongle"}
@@ -1250,19 +1393,21 @@ local function Activate(self, old)
 	self.commands = commands
 	self.messages = messages
 	self.frame = frame
+	self.timers = timers
+	self.heap = heap
 
 	frame:SetScript("OnEvent", OnEvent)
+	frame:SetScript("OnUpdate", OnUpdate)
 
-	local lib = old or self
-
-	-- Lets make sure the lookup table has us.
-	lookup[lib] = lookup[major]
+	-- Lets ensure the lookup table has our entry
+	-- This fixes an issue with upgrades
+	lookup[self] = lookup[major]
 
 	-- Register for events using Dongle itself
-	lib:RegisterEvent("ADDON_LOADED", ADDON_LOADED)
-	lib:RegisterEvent("PLAYER_LOGIN", PLAYER_LOGIN)
-	lib:RegisterEvent("PLAYER_LOGOUT", PLAYER_LOGOUT)
-	lib:RegisterMessage("DONGLE_PROFILE_CHANGED", DONGLE_PROFILE_CHANGED)
+	self:RegisterEvent("ADDON_LOADED", ADDON_LOADED)
+	self:RegisterEvent("PLAYER_LOGIN", PLAYER_LOGIN)
+	self:RegisterEvent("PLAYER_LOGOUT", PLAYER_LOGOUT)
+	self:RegisterMessage("DONGLE_PROFILE_CHANGED", DONGLE_PROFILE_CHANGED)
 
 	-- Convert all the modules handles
 	for name,obj in pairs(registry) do
@@ -1284,13 +1429,6 @@ local function Activate(self, old)
 			cmd[method] = self[method]
 		end
 	end
-end
-
--- Lets nuke any Dongle deactivate functions, please
--- I hate nasty hacks.
-if DongleStub.versions and DongleStub.versions[major] then
-	local reg = DongleStub.versions[major]
-	reg.deactivate = nil
 end
 
 Dongle = DongleStub:Register(Dongle, Activate)
