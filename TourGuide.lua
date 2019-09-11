@@ -3,7 +3,7 @@ local myfaction = UnitFactionGroup("player")
 local L = TOURGUIDE_LOCALE
 TOURGUIDE_LOCALE = nil
 
-TourGuide = DongleStub("Dongle-1.0"):New("TourGuide")
+TourGuide = DongleStub("Dongle-1.2"):New("TourGuide")
 if tekDebug then TourGuide:EnableDebug(10, tekDebug:GetFrame("TourGuide")) end
 TourGuide.guides = {}
 TourGuide.guidelist = {}
@@ -30,7 +30,7 @@ TourGuide.icons = setmetatable({
 
 
 function TourGuide:Initialize()
-	self.db = self:InitializeDB("TourGuideAlphaDB", {
+	self.db = self:InitializeDB("TourGuideClassicDB", {
 		char = {
 			hearth = "Unknown",
 			turnedin = {},
@@ -55,19 +55,21 @@ function TourGuide:Initialize()
 	LibStub:GetLibrary("LibDataBroker-1.1"):NewDataObject("TourGuide", {
 		type = "launcher",
 		icon = "Interface\\Icons\\Ability_Rogue_Sprint",
-		OnClick = function() InterfaceOptionsFrame_OpenToCategory(TourGuide.configpanel) end,
+		OnClick = function() InterfaceOptionsFrame_OpenToCategory(TourGuide.configpanel)
+			InterfaceOptionsFrame_OpenToCategory(TourGuide.configpanel) end,
 	})
 end
 
 
 function TourGuide:Enable()
 	self.Enable = nil -- Dongle likes to call Enable multiple times if we bug LightHeaded... so we need to nil out to ensure we are only called once
-	if TomTom and TomTom.version ~= "SVN" and (tonumber(TomTom.version) or 0) < 120 then self:Print("Your version of TomTom is out of date.  TourGuide waypoints may not work correctly.") end
+	-- if TomTom and TomTom.version ~= "SVN" and (tonumber(TomTom.version) or 0) < 120 then self:Print("Your version of TomTom is out of date.  TourGuide waypoints may not work correctly.") end
 
 	if self.db.char.currentguide == "No Guide" and UnitLevel("player") == 1 and UnitXP("player") == 0 then
-		local startguides = {BloodElf = "Eversong Woods (1-13)", Orc = "Durotar (1-12)", Troll = "Durotar (1-12)", Tauren = "Mulgore (1-12)", Undead = "Tirisfal Glades (1-12)",
-			Dwarf = "Dun Morogh (1-11)", Gnome = "Dun Morogh (1-11)", Dreanei = "Azuremyst Isle (1-12)", Human = "Elwynn Forest (1-12)", NightElf = "Teldrassil (1-12)"}
-		self.db.char.currentguide = startguides[select(2, UnitRace("player"))] or self.guidelist[1]
+		local startguides = {Orc = "Durotar (1-12)", Troll = "Durotar (1-12)", Tauren = "Mulgore (1-12)", Undead = "Tirisfal Glades (1-12)",
+			Dwarf = "Dun Morogh (1-11)", Gnome = "Dun Morogh (1-11)", Human = "Elwynn Forest (1-12)", NightElf = "Teldrassil (1-12)"}
+		local race,_,_ = UnitRace("player")
+		self.db.char.currentguide = startguides[race] or self.guidelist[1]
 	end
 
 	self.db.char.currentguide = self.db.char.currentguide or self.guidelist[1]
@@ -99,21 +101,11 @@ function TourGuide:Enable()
 	for _,event in pairs(self.TrackEvents) do self:RegisterEvent(event) end
 	self:RegisterEvent("QUEST_COMPLETE", "UpdateStatusFrame")
 	self:RegisterEvent("QUEST_DETAIL", "UpdateStatusFrame")
-	self:RegisterEvent("PARTY_MEMBERS_CHANGED", "CommCurrentObjective")
+	self:RegisterEvent("GROUP_ROSTER_UPDATE", "CommCurrentObjective")
 	self.TrackEvents = nil
 	self:QuestID_QUEST_LOG_UPDATE()
 	GetQuestsCompleted(TourGuide.turnedinquests)
 	self:UpdateStatusFrame()
-	self:RegisterEvent("QUEST_QUERY_COMPLETE")
-	if IsLoggedIn() then QueryQuestsCompleted()
-	else
-		self:RegisterEvent("PLAYER_LOGIN")
-		function self:PLAYER_LOGIN()
-			QueryQuestsCompleted()
-			self:UnregisterEvent("PLAYER_LOGIN")
-			self.PLAYER_LOGIN = nil
-		end
-	end
 end
 
 
@@ -137,7 +129,7 @@ function TourGuide:GetQuestLogIndexByName(name)
 	name = name or self.quests[self.current]
 	name = name:gsub(L.PART_GSUB, "")
 	for i=1,GetNumQuestLogEntries() do
-		local title, _, _, _, isHeader = GetQuestLogTitle(i)
+		local title, _, _, isHeader = GetQuestLogTitle(i)
 		if firstcall and not isHeader then
 			firstcall = nil
 			if string.sub(title, 1, 1) == "[" then self:Print("Another addon, most likely a \"Quest Level\" addon, is preventing TourGuide's quest detection from working correctly.") end
@@ -147,20 +139,11 @@ function TourGuide:GetQuestLogIndexByName(name)
 end
 
 
-function TourGuide:GetQuestLogIndexByQID(qid)
-	for i=1,GetNumQuestLogEntries() do
-		local link = GetQuestLink(i)
-		local thisqid = link and self.QIDmemo[link]
-		if thisqid and qid == thisqid then return i end
-	end
-end
-
-
 function TourGuide:GetQuestDetails(name, qid, qo)
 	if not name then return end
 
-	local i = qid and self:GetQuestLogIndexByQID(qid) or self:GetQuestLogIndexByName(name)
-	local complete = i and (qo and self:IsQuestObjectiveComplete(i, qo) or select(7, GetQuestLogTitle(i)) == 1)
+	local i = qid and GetQuestLogIndexByID(qid) or self:GetQuestLogIndexByName(name)
+	local complete = i and (qo and self:IsQuestObjectiveComplete(i, qo) or select(6, GetQuestLogTitle(i)) == 1)
 	return i, complete
 end
 
