@@ -74,7 +74,7 @@ function TourGuide:UpdateStatusFrame()
 		end
 	end
 	QuestLog_Update()
-	WatchFrame_Update()
+	QuestWatch_Update()
 
 	if not nextstep and self:LoadNextGuide() then return self:UpdateStatusFrame() end
 	if not nextstep then return end
@@ -96,8 +96,8 @@ function TourGuide:UpdateStatusFrame()
 	end
 
 	if self.db.char.showuseitem and action == "COMPLETE" and self.db.char.showuseitemcomplete then
-		local useitem2 = GetQuestLogSpecialItemInfo(logi or 0)
-		if useitem2 then useitem2 = tonumber(useitem2:match("item:(%d+):")) end
+		-- local useitem2 = GetQuestLogSpecialItemInfo(logi or 0)
+		-- if useitem2 then useitem2 = tonumber(useitem2:match("item:(%d+):")) end
 		self:SetUseItem(useitem2 or useitem)
 	elseif self.db.char.showuseitem and action ~= "COMPLETE" then
 		self:SetUseItem(useitem)
@@ -113,8 +113,8 @@ end
 function TourGuide:CommCurrentObjective()
 	local action, quest, fullquest = self:GetObjectiveInfo()
 	local qid = self:GetObjectiveTag("QID")
-	SendAddonMessage("TGuide", action.." "..(quest or "???"), "PARTY")
-	if qid then SendAddonMessage("TGuideQID", qid, "PARTY") end
+	C_ChatInfo.SendAddonMessage("TGuide", action.." "..(quest or "???"), "PARTY")
+	if qid then C_ChatInfo.SendAddonMessage("TGuideQID", qid, "PARTY") end
 end
 
 
@@ -129,6 +129,7 @@ end
 
 function dataobj.OnClick(self, btn)
 	if TourGuide.db.char.currentguide == "No Guide" then InterfaceOptionsFrame_OpenToCategory(TourGuide.configpanel)
+		InterfaceOptionsFrame_OpenToCategory(TourGuide.configpanel)
 	else
 		if btn == "RightButton" then
 			if TourGuide.objectiveframe:IsVisible() then
@@ -143,7 +144,7 @@ function dataobj.OnClick(self, btn)
 		else
 			if IsShiftKeyDown() then TourGuide:SetTurnedIn()
 			else
-				local i = TourGuide:GetQuestLogIndexByQID(TourGuide:GetObjectiveTag("QID", TourGuide.current))
+				local i = GetQuestLogIndexByID(TourGuide:GetObjectiveTag("QID", TourGuide.current))
 				if i then SelectQuestLogEntry(i) end
 				ShowUIPanel(QuestLogFrame)
 			end
