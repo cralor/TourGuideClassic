@@ -52,7 +52,7 @@ frame:SetScript("OnShow", function()
 		TourGuide:PositionItemFrame()
 	end)
 
-	local showuseitemcomplete, showuseitemcompletelabel = tekcheck.new(frame, nil, L["Show buttom for 'complete' objectives"], "TOPLEFT", showuseitem, "BOTTOMLEFT", GAP*2, -GAP)
+	local showuseitemcomplete, showuseitemcompletelabel = tekcheck.new(frame, nil, L["Show button for 'complete' objectives"], "TOPLEFT", showuseitem, "BOTTOMLEFT", GAP*2, -GAP)
 	showuseitemcomplete.tiptext = L["The advanced quest tracker in the default UI will show these items.  Enable this if you would rather have TourGuide's button."]
 	showuseitemcomplete:SetScript("OnClick", function(self) checksound(self); TourGuide.db.char.showuseitemcomplete = not TourGuide.db.char.showuseitemcomplete; TourGuide:UpdateStatusFrame() end)
 	showuseitemcomplete:SetChecked(TourGuide.db.char.showuseitemcomplete)
@@ -111,16 +111,16 @@ frame:SetScript("OnShow", function()
 		end
 	end)
 
-	local rafmode = tekcheck.new(frame, nil, L["Recruit-a-friend mode"], "TOPLEFT", mapquestgivernotes, "BOTTOMLEFT", -GAP*2, -GAP)
-	rafmode.tiptext = L["Use recruit-a-friend modifications to guides, if present."]
-	rafmode:SetScript("OnClick", function(self)
-		checksound(self)
-		TourGuide.db.char.rafmode = not TourGuide.db.char.rafmode
-		TourGuide:LoadGuide(TourGuide.db.char.currentguide)
-		TourGuide:UpdateStatusFrame()
-		TourGuide:UpdateGuidesPanel()
-	end)
-	rafmode:SetChecked(TourGuide.db.char.rafmode)
+	-- local rafmode = tekcheck.new(frame, nil, L["Recruit-a-friend mode"], "TOPLEFT", mapquestgivernotes, "BOTTOMLEFT", -GAP*2, -GAP)
+	-- rafmode.tiptext = L["Use recruit-a-friend modifications to guides, if present."]
+	-- rafmode:SetScript("OnClick", function(self)
+	-- 	checksound(self)
+	-- 	TourGuide.db.char.rafmode = not TourGuide.db.char.rafmode
+	-- 	TourGuide:LoadGuide(TourGuide.db.char.currentguide)
+	-- 	TourGuide:UpdateStatusFrame()
+	-- 	TourGuide:UpdateGuidesPanel()
+	-- end)
+	-- rafmode:SetChecked(TourGuide.db.char.rafmode)
 
 
 	-- Help box
@@ -152,7 +152,7 @@ frame:SetScript("OnShow", function()
 
 	-- Help box
 	local anchor
-	local helpbox = LibStub("tekKonfig-Group").new(frame, "Help", "TOP", rafmode, "BOTTOM", 0, -EDGEGAP)
+	local helpbox = LibStub("tekKonfig-Group").new(frame, "Help", "TOP", mapquestgivernotes, "BOTTOM", 0, -EDGEGAP)
 	helpbox:SetPoint("LEFT", frame, EDGEGAP, 0)
 	helpbox:SetPoint("BOTTOMRIGHT", frame, "BOTTOM", -EDGEGAP/2 - CENTEROFFSET, EDGEGAP)
 	for i,icontype in ipairs(order) do
