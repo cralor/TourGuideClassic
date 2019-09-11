@@ -63,8 +63,8 @@ end
 local function ShowTooltip2(f)
 	if not f.qid then return end
 
-	GameTooltip:SetOwner(f, "ANCHOR_RIGHT")
-	GameTooltip:SetHyperlink("quest:"..f.qid)
+	-- GameTooltip:SetOwner(f, "ANCHOR_RIGHT")
+	-- GameTooltip:SetHyperlink("quest:"..tonumber(f.qid))
 end
 
 
@@ -96,7 +96,8 @@ end
 function TourGuide:CreateObjectivePanel()
 	local configbutton = CreateButton(frame, "BOTTOMRIGHT", -6, 6)
 	configbutton:SetText(L["Config"])
-	configbutton:SetScript("OnClick", function() HideUIPanel(frame); InterfaceOptionsFrame_OpenToCategory(TourGuide.configpanel) end)
+	configbutton:SetScript("OnClick", function() HideUIPanel(frame); InterfaceOptionsFrame_OpenToCategory(TourGuide.configpanel)
+	 	InterfaceOptionsFrame_OpenToCategory(TourGuide.configpanel) end)
 
 	if tekDebug then
 		local b = CreateButton(frame, "RIGHT", configbutton, "LEFT")
@@ -158,7 +159,7 @@ function TourGuide:CreateObjectivePanel()
 		check:SetScript("OnClick", function(f) self:SetTurnedIn(row.i, f:GetChecked()) end)
 
 		row.text = text
-		row.questhover = questhover
+		-- row.questhover = questhover
 		row.detail = detail
 		row.check = check
 		row.icon = icon
@@ -226,7 +227,7 @@ function TourGuide:UpdateOHPanel(value)
 			row.text:SetText(name..(optional and L[" |cff808080(Optional)"] or ""))
 			row.detail:SetText(self:GetObjectiveTag("N", i + offset))
 			row.check:SetChecked(checked)
-			row.questhover.qid = self:GetObjectiveTag("QID", i + offset)
+			-- row.questhover.qid = self:GetObjectiveTag("QID", i + offset)
 
 			if (TourGuide.current > (i + offset)) and optional and not checked then
 				row.text:SetTextColor(0.5, 0.5, 0.5)
@@ -241,6 +242,3 @@ function TourGuide:UpdateOHPanel(value)
 		end
 	end
 end
-
-
-
