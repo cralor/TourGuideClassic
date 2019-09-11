@@ -1,14 +1,27 @@
 
 local L = TourGuide.Locale
-
 local zonei, zonec, zonenames = {}, {}, {}
-for ci,c in pairs{GetMapContinents()} do
-	zonenames[ci] = {GetMapZones(ci)}
-	for zi,z in pairs(zonenames[ci]) do
-		zonei[z], zonec[z] = zi, ci
+
+for contMapIndex, contMap in pairs(C_Map.GetMapChildrenInfo(C_Map.GetMapInfo(C_Map.GetFallbackWorldMapID()).mapID)) do
+	if contMap.mapType == 2 then
+		local cont_children = C_Map.GetMapChildrenInfo(contMap.mapID)
+		local znames = {}
+		for zoneMapIndex, zoneMap in pairs(cont_children) do
+			if zoneMap.mapType == 3 then
+				table.insert(znames,zoneMap.name)
+				zonei[zoneMap.name], zonec[zoneMap.name] = zoneMap.mapID, contMap.mapID
+			end
+		end
+		zonenames[contMapIndex] = znames
 	end
 end
 
+-- for ci,c in pairs{GetMapContinents()} do
+-- 	zonenames[ci] = {GetMapZones(ci)}
+-- 	for zi,z in pairs(zonenames[ci]) do
+-- 		zonei[z], zonec[z] = zi, ci
+-- 	end
+-- end
 
 local cache = {}
 local function MapPoint(zone, x, y, desc, c, z)
@@ -22,15 +35,34 @@ local function MapPoint(zone, x, y, desc, c, z)
 	end
 	zone = zone or zonenames[zc][zi]
 
-	if TomTom then table.insert(cache, TomTom:AddZWaypoint(zc, zi, x, y, desc, false))
+	if TomTom then table.insert(cache, TomTom:AddWaypoint(zi, x/100, y/100, {
+		title = desc or L["TomTom waypoint"],
+    }))
 	elseif Cartographer_Waypoints then
 		local pt = NotePoint:new(zone, x/100, y/100, desc)
 		Cartographer_Waypoints:AddWaypoint(pt)
 		table.insert(cache, pt.WaypointID)
 	end
-	
-	SendAddonMessage("TGuideWP", string.join(" ", zc, zi, x, y, desc), "PARTY")
+
+	C_ChatInfo.SendAddonMessage("TGuideWP", string.join(" ", zc, zi, x, y, desc), "PARTY")
 end
+-- local function MapPoint(zone, x, y, desc)
+-- 	TourGuide:DebugF(1, "Mapping %q - %s (%.2f, %.2f)", desc, zone, x, y)
+-- 	if zone then TourGuide:PrintF(L["Cannot find zone %q, using current zone."], zone)
+-- 	else TourGuide:Print(L["No zone provided, using current zone."]) end
+--
+-- 	zone = zone or hbd:GetLocalizedMap(C_Map.GetBestMapForUnit("player"))
+--
+-- 	if TomTom then
+-- 		table.insert(cache, TomTom:AddWaypoint(TomTom.NameToMapId[zone], {title = desc, persistent = false}))
+-- 	-- elseif Cartographer_Waypoints then
+-- 		-- local pt = NotePoint:new(zone, x/100, y/100, desc)
+-- 		-- Cartographer_Waypoints:AddWaypoint(pt)
+-- 		-- table.insert(cache, pt.WaypointID)
+-- 	end
+--
+-- 	C_ChatInfo.SendAddonMessage("TGuideWP", string.join(" ", zc, zi, x, y, desc), "PARTY")
+-- end
 
 
 local elapsed, taction, tquest, tzone, tnote, tqid, tlogi
@@ -53,9 +85,9 @@ function TourGuide:ParseAndMapCoords(action, quest, zone, note, qid, logi)
 	end
 
 	if logi and (action == "COMPLETE" or action == "TURNIN") then
-		QuestMapUpdateAllQuests()
-		QuestPOIUpdateIcons()
-		local _, x, y, obj = QuestPOIGetIconInfo(qid)
+		-- QuestMapUpdateAllQuests()
+		-- QuestPOIUpdateIcons()
+		local _, x, y, obj --= QuestPOIGetIconInfo(qid)
 		if x and y then table.insert(temp, y*100) table.insert(temp, x*100)
 		else return f:Show() end
 	end
