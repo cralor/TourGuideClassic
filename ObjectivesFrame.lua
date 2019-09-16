@@ -118,12 +118,12 @@ function TourGuide:CreateObjectivePanel()
 
 	upbutt:SetScript("OnClick", function(f)
 		scrollbar:SetValue(offset - NUMROWS + 1)
-		PlaySound("UChatScrollButton")
+		PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON)
 	end)
 
 	downbutt:SetScript("OnClick", function(f)
 		scrollbar:SetValue(offset + NUMROWS - 1)
-		PlaySound("UChatScrollButton")
+		PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON)
 	end)
 
 	local bg = {bgFile = "Interface/Tooltips/UI-Tooltip-Background"}
