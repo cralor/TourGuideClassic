@@ -89,7 +89,8 @@ function TourGuide:ParseAndMapCoords(action, quest, zone, note, qid, logi)
 		-- QuestPOIUpdateIcons()
 		local _, x, y, obj --= QuestPOIGetIconInfo(qid)
 		if x and y then table.insert(temp, y*100) table.insert(temp, x*100)
-		else return f:Show() end
+		--else return f:Show()
+		end
 	end
 	if not temp[1] and (action == "ACCEPT" or action == "TURNIN") and LightHeaded then self:MapLightHeadedNPC(qid, action, quest) end
 	if not temp[1] and note and self.db.char.mapnotecoords then for x,y in note:gmatch(L.COORD_MATCH) do table.insert(temp, tonumber(y)); table.insert(temp, tonumber(x)) end end
