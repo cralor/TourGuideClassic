@@ -63,8 +63,10 @@ end
 
 function TourGuide:Enable()
 	self.Enable = nil -- Dongle likes to call Enable multiple times if we bug LightHeaded... so we need to nil out to ensure we are only called once
-	-- if TomTom and TomTom.version ~= "SVN" and (tonumber(TomTom.version) or 0) < 120 then self:Print("Your version of TomTom is out of date.  TourGuide waypoints may not work correctly.") end
-
+	if TomTom then 
+		local TomTomVersionNumber = TomTom.version:gsub("v" .. select(4, GetBuildInfo()), ""):gsub("-",""):gsub("%.","")
+		if TomTom.version ~= "SVN" and TomTom.version:find(select(4, GetBuildInfo())) > 0 and (tonumber(TomTomVersionNumber) or 0) < 100 then self:Print("Your version of TomTom is out of date.  TourGuide waypoints may not work correctly.")end
+	end
 	if self.db.char.currentguide == "No Guide" and UnitLevel("player") == 1 and UnitXP("player") == 0 then
 		local startguides = {Orc = "Durotar (1-12)", Troll = "Durotar (1-12)", Tauren = "Mulgore (1-12)", Undead = "Tirisfal Glades (1-12)",
 			Dwarf = "Dun Morogh (1-11)", Gnome = "Dun Morogh (1-11)", Human = "Elwynn Forest (1-12)", NightElf = "Teldrassil (1-12)"}
@@ -106,6 +108,18 @@ function TourGuide:Enable()
 	self:QuestID_QUEST_LOG_UPDATE()
 	GetQuestsCompleted(TourGuide.turnedinquests)
 	self:UpdateStatusFrame()
+	if IsLoggedIn() then
+		GetQuestsCompleted(TourGuide.turnedinquests)
+		self:UpdateStatusFrame()
+	else
+		self:RegisterEvent("PLAYER_LOGIN")
+		function self:PLAYER_LOGIN()
+			GetQuestsCompleted(TourGuide.turnedinquests)
+			self:UpdateStatusFrame()
+			self:UnregisterEvent("PLAYER_LOGIN")
+			self.PLAYER_LOGIN = nil
+		end
+	end
 end
 
 
