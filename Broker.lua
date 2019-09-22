@@ -144,7 +144,7 @@ function dataobj.OnClick(self, btn)
 		else
 			if IsShiftKeyDown() then TourGuide:SetTurnedIn()
 			else
-				local i = self:GetQuestLogIndexByID(TourGuide:GetObjectiveTag("QID", TourGuide.current))
+				local i = TourGuide:GetQuestLogIndexByID(TourGuide:GetObjectiveTag("QID", TourGuide.current))
 				if i then SelectQuestLogEntry(i) end
 				ShowUIPanel(QuestLogFrame)
 			end
