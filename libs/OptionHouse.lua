@@ -391,13 +391,13 @@ end
 local function scrollButtonUp(self)
 	local parent = self:GetParent()
 	parent:SetValue(parent:GetValue() - (parent:GetHeight() / 2))
-	PlaySound("UChatScrollButton")
+	PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON)
 end
 
 local function scrollButtonDown(self)
 	local parent = self:GetParent()
 	parent:SetValue(parent:GetValue() + (parent:GetHeight() / 2))
-	PlaySound("UChatScrollButton")
+	PlaySound(SOUNDKIT.U_CHAT_SCROLL_BUTTON)
 end
 
 local function createScrollFrame(frame, displayNum, onScroll)
@@ -1318,7 +1318,7 @@ local function instanceLoaded()
 			local menubutton = CreateFrame("Button", "GameMenuButtonOptionHouse", GameMenuFrame, "GameMenuButtonTemplate")
 			menubutton:SetText(L["OPTION_HOUSE"])
 			menubutton:SetScript("OnClick", function()
-				PlaySound("igMainMenuOption")
+				PlaySound(SOUNDKIT.IG_MAINMENU_OPTION)
 				HideUIPanel(GameMenuFrame)
 				SlashCmdList["OPTHOUSE"]()
 			end)

@@ -152,11 +152,15 @@ function TourGuide:GetQuestLogIndexByName(name)
 	end
 end
 
+function TourGuide:GetQuestLogIndexByID(qid)
+	local index = GetQuestLogIndexByID(qid)
+	if (index > 0) then return index end
+end
 
 function TourGuide:GetQuestDetails(name, qid, qo)
 	if not name then return end
 
-	local i = qid and GetQuestLogIndexByID(qid) or self:GetQuestLogIndexByName(name)
+	local i = qid and self:GetQuestLogIndexByID(qid) or self:GetQuestLogIndexByName(name)
 	local complete = i and (qo and self:IsQuestObjectiveComplete(i, qo) or select(6, GetQuestLogTitle(i)) == 1)
 	return i, complete
 end
